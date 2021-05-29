@@ -7,37 +7,36 @@
 ;; -- Helpers ------------------------------------------------------------------------------------
 (defn check [letters words]
   (let [letters (set letters)]
-    (filter (fn [w]
-              (js/console.log w)
-              (set/subset? (set (:word w)) letters)) words)))
+    (->> words
+         (filter (fn [w] (set/subset? (set w) letters)))
+         (set))))
 
-(defn get-next-id [people]
-  (if (seq people)
-    (-> (apply max-key :id people)
-        (:id)
-        (inc))
-    0))
+(defn keyed-collection [col]
+  (map vector (iterate inc 0) col))
 
-(comment (check "abcdefghijklmnop" [{:id 0 :word "bishop"}
-                                    {:id 1 :word "king"}]))
 ;;-- Events and Effects --------------------------------------------------------------------------
 (rf/reg-event-db
  :initialize
  (fn [_ _]
-   {:words []
+   {:words #{}
     :current-word ""
     :winners []
     :letters #{}}))
 
-(rf/reg-event-db 
- :add-word
- (fn [{:keys [words] :as db} _]
-   (let [new-words (conj words {:id   (get-next-id (:words db))
-                                :word (db :current-word)})]
+(rf/reg-event-db
+ :toggle-letter
+ (fn [{:keys [letters words] :as db} [_ letter]]
+   (let [new-letters (cond (letters letter)
+                           (set/difference letters #{letter})
+                           
+                           (= 18 (count letters))
+                           letters
+
+                           :else
+                           (conj letters letter))]
      (-> db
-         (assoc :words new-words)
-         (assoc :current-word "")
-         (assoc :winners (check (db :letters) new-words))))))
+         (assoc :letters new-letters)
+         (assoc :winners (check new-letters words))))))
 
 (rf/reg-event-db
  :word-change
@@ -45,93 +44,141 @@
    (assoc db :current-word word)))
 
 (rf/reg-event-db
+ :add-word
+ (fn [{:keys [current-word letters words] :as db} _]
+   (let [new-words (conj words current-word)]
+     (-> db
+         (update :words conj current-word)
+         (assoc :current-word "")
+         (assoc :winners (check letters new-words))))))
+
+(rf/reg-event-db
  :delete
- (fn [{:keys [words] :as db} [_ id-to-remove]]
-   (let [new-words (remove (fn [{:keys [id]}] (= id-to-remove id)) words)]
+ (fn [{:keys [words] :as db} [_ word-to-remove]]
+   (let [new-words (set (remove (fn [word] (= word-to-remove word)) words))]
      (-> db
          (assoc :words new-words)
          (assoc :winners (check (db :letters) new-words))))))
 
-(rf/reg-event-db
- :letters-change
- (fn [db [_ letters]]
-   (-> db
-    (assoc :letters letters)
-    (assoc :winners (check letters (db :words))))))
-
 ;; -- Subscriptions ------------------------------------------------------------------
-(rf/reg-sub
- :words
- (fn [db _]
-   (:words db)))
-
-(rf/reg-sub
+(rf/reg-sub 
  :letters
  (fn [db _]
-   (:letters db)))
+   (db :letters)))
 
 (rf/reg-sub
  :current-word
  (fn [db _]
-   (:current-word db)))
+   (db :current-word)))
+
+(rf/reg-sub
+ :words
+ (fn [db _]
+   (db :words)))
 
 (rf/reg-sub
  :winners
  (fn [db _]
-   (:winners db)))
+   (db :winners)))
 
 ;; -- Reagent Forms ------------------------------------------------------------------
-(defn add-words-and-letters []
-  (let [letters @(rf/subscribe [:letters])]
+(defn letters []
+  (let [selected-letters @(rf/subscribe [:letters])]
+    [:div {:style {:margin-bottom 20}}
+     [:h3 "Select upto 18 letters"]
+     (let [letters "abcdefghijklmnopqrstuvwxyz"
+           a-to-m (->> letters
+                       (take 13)
+                       (map identity))
+           n-to-z (->> letters
+                       (drop 13)
+                       (map identity))]
+       [:div
+        [:div.flex-container
+         (for [[k letter] (keyed-collection a-to-m)]
+           [:div {:key k
+                  :style {:cursor           :pointer
+                                   :background-color (if (selected-letters letter) :yellow "#f1f1f1")}
+                  :on-click #(rf/dispatch [:toggle-letter letter])}
+            [:label {:style {:cursor :pointer}} letter]])]
+        [:div.flex-container
+         (for [[k letter] (keyed-collection n-to-z)]
+           [:div  {:key k
+                   :style    {:cursor           :pointer
+                              :background-color (if (selected-letters letter) :yellow "#f1f1f1")}
+                   :on-click #(rf/dispatch [:toggle-letter letter])}
+            [:label {:style {:cursor :pointer}} letter]])]
+        [:div (str "Selected " (count selected-letters) " letters")]])]))
+
+(defn word-editor []
+  (let [winners @(rf/subscribe [:winners])]
     [:div
-     [:div {:style {:margin 10
-                    :padding 10}}
-      [:label "Enter letters"]
-      [:input {:type "text"
-               :on-change #(rf/dispatch-sync [:letters-change (-> % .-target .-value)])
-               :value letters}]]
+     [:h3 "Words"]
+     [:div {:style {:visibility (if (>= (count winners) 3) :visible :collapse)
+                    :height (if (>= (count winners) 3) 40 0)}}
+      [:h1 {:style {:color :orange
+                    :text-shadow "-1px 0 red, 0 1px red, 1px 0 red, 0 -1px red"}}
+       "You are a winner!"]]
      [:div
-      [:label (str (count (set letters)) " distinct letters entered.")]]
-     [:div {:style {:margin 10
-                    :padding 10}}
-      [:label "Add word: "]
+      [:label "Enter word: "]
       [:input {:type "text"
                :on-change #(rf/dispatch-sync [:word-change (-> % .-target .-value)])
                :value @(rf/subscribe [:current-word])
                :style {:margin 10}}]
       [:button.btn.btn-primary
        {:on-click #(rf/dispatch [:add-word])}
-       [:i.fas.fa-plus]]]]))
+       [:i.fas.fa-plus]]
+      [:label.winners-count 
+       (str (count winners) " Winners!")]]]))
 
-(defn entered-words []
-  (let [words @(rf/subscribe [:words])]
+(defn words []
+  (let [words @(rf/subscribe [:words])
+        winners @(rf/subscribe [:winners])]
+    (js/console.log winners)
     [:div
-     [:h2 (str "Entered words (" (count words) "): ")]
-     [:ul
-      (for [{:keys [id word]} words]
-        [:li {:key id} [:div [:button.delete.btn
-                              {:on-click #(rf/dispatch [:delete id])}
-                              [:i.fas.fa-trash-alt]] word]])]]))
-
-(defn winners []
-  (let [winners @(rf/subscribe [:winners])]
-    [:div
-     [:h2 (str "Winners below (" (count winners) "):") [:i.fas.fa-grin-stars
-                                                        {:style {:visibility (if (>= (count winners) 3)
-                                                                               :visible
-                                                                               :hidden)
-                                                                 :color :orange} }]]
-     [:ul
-      (for [{:keys [id word]} winners]
-        [:li {:key id} [:label word]])]]))
+     [:ul.no-bullets
+      (for [[k w] (keyed-collection words)]
+        [:li {:key k}
+         [:div [:button.delete.btn
+                {:on-click #(rf/dispatch [:delete w])}
+                [:i.fas.fa-trash-alt]]
+          [:i.fas.fa-star {:style {:color :orange
+                                   :margin-right 5
+                                   :text-shadow "-1px 0 red, 0 1px red, 1px 0 red, 0 -1px red"
+                                   :visibility (if (winners w) :visible :hidden)}}]
+          w
+          [:i.fas.fa-star {:style {:color :orange
+                                   :margin-left 5
+                                   :text-shadow "-1px 0 red, 0 1px red, 1px 0 red, 0 -1px red"
+                                   :visibility (if (winners w) :visible :hidden)}}]]])]]))
 
 ;; -- App -------------------------------------------------------------------------
 (defn app []
   [:div.container
-   [add-words-and-letters]
-   [entered-words]
-   [winners]
-   ])
+   [:h1 "Letters Lotto Checker"]
+   [letters]
+   [word-editor]
+   [words]])
+
+;; -- Dev Events --------------------------------------------------------------------
+(rf/reg-event-db
+ :clear
+ (fn [db _]
+   (assoc db :letters #{})))
+
+(rf/reg-event-db
+ :clear-words
+ (fn [db _]
+   (assoc db :words #{})))
+
+(rf/reg-event-db
+ :clear-winners
+ (fn [db _]
+   (assoc db :winners #{})))
+
+(comment (rf/dispatch [:clear])
+         (rf/dispatch [:clear-words])
+         (rf/dispatch [:clear-winners]))
 
 ;; -- After-Load --------------------------------------------------------------------
 ;; Do this after the page has loaded.
@@ -147,11 +194,3 @@
 (defonce initialize (rf/dispatch-sync [:initialize]))       ; dispatch the event which will create the initial state. 
 
 
-
-(comment 
-  
-  (defn check [letters words]
-    (let [letters (set letters)]
-      (filter (fn [w]
-                (set/subset? (set w) letters)) words)))
-)
