@@ -35,3 +35,35 @@ ul.no-bullets {
 .winners-count {
     margin-left: 15px;
 }
+
+.winner-label {
+    color: orange;
+    text-shadow: -1px 0 red, 0 1px red, 1px 0 red, 0 -1px red;
+}
+
+.word-input {
+    margin: 10px;
+}
+
+.winner:collapsed{
+    height: 0px;
+}
+
+.star {
+    color:orange;
+    margin-right: 5px;
+    text-shadow: -1px 0 red, 0 1px red, 1px 0 red, 0 -1px red;
+    visibility: visible;
+}
+
+.star.hidden {
+    visibility: hidden;
+}
+
+.pointable {
+    cursor: pointer;
+}
+
+.letters {
+    margin-bottom: 20px;
+}
