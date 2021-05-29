@@ -1,0 +1,13 @@
+body{
+    background-color:lightsteelblue;
+}
+.content {
+    text-align: center;
+    margin:10px;
+}
+
+
+.letter {
+    padding: 5px;
+    margin: 5px;
+}
