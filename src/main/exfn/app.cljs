@@ -82,6 +82,14 @@
    (db :winners)))
 
 ;; -- Reagent Forms ------------------------------------------------------------------
+(defn letters-row [letters selected-letters]
+  [:div.flex-container
+   (for [[k letter] (keyed-collection letters)]
+     [:div.letter.pointable {:key      k
+                             :style    {:background-color (if (selected-letters letter) :yellow "#f1f1f1")}
+                             :on-click #(rf/dispatch [:toggle-letter letter])}
+      [:label.pointable letter]])])
+
 (defn letters []
   (let [selected-letters @(rf/subscribe [:letters])]
     [:div.letters
@@ -90,20 +98,11 @@
            a-to-m (->> letters
                        (take 13))
            n-to-z (->> letters
-                       (drop 13))]
+                       (drop 13))
+       ]
        [:div
-        [:div.flex-container
-         (for [[k letter] (keyed-collection a-to-m)]
-           [:div.pointable {:key k
-                            :style {:background-color (if (selected-letters letter) :yellow "#f1f1f1")}
-                            :on-click #(rf/dispatch [:toggle-letter letter])}
-            [:label.pointable letter]])]
-        [:div.flex-container
-         (for [[k letter] (keyed-collection n-to-z)]
-           [:div.pointable  {:key      k
-                             :style    {:background-color (if (selected-letters letter) :yellow "#f1f1f1")}
-                             :on-click #(rf/dispatch [:toggle-letter letter])}
-            [:label.pointable  letter]])]
+        [letters-row a-to-m selected-letters]
+        [letters-row n-to-z selected-letters]
         [:div (str "Selected " (count selected-letters) " letters")]])]))
 
 (defn word-editor []
@@ -112,7 +111,7 @@
      [:h3 "Words"]
      [:div.winner {:style {:visibility (if (>= (count winners) 3) :visible :collapse)
                            :height (if (>= (count winners) 3) 40 0)}}
-      [:h1.winner-label "You are a winner!"]]
+      [:h1.winner-indicator "You are a winner!"]]
      [:div
       [:label "Enter word: "]
       [:input.word-input {:type "text"
@@ -124,10 +123,12 @@
       [:label.winners-count 
        (str (count winners) " Winners!")]]]))
 
+(defn star [hidden?]
+  [:i.fas.fa-star.star.winner-indicator {:style {:visibility (if hidden? :visible :hidden)}}])
+
 (defn words []
   (let [words @(rf/subscribe [:words])
         winners @(rf/subscribe [:winners])]
-    (js/console.log winners)
     [:div
      [:ul.no-bullets
       (for [[k w] (keyed-collection words)]
@@ -135,9 +136,9 @@
          [:div [:button.delete.btn
                 {:on-click #(rf/dispatch [:delete w])}
                 [:i.fas.fa-trash-alt]]
-          [:i.fas.fa-star.star {:style {:visibility (if (winners w) :visible :hidden)}}]
+          [star (winners w)]
           w
-          [:i.fas.fa-star.star {:style {:visibility (if (winners w) :visible :hidden)}}]]])]]))
+          [star (winners w)]]])]]))
 
 ;; -- App -------------------------------------------------------------------------
 (defn app []
@@ -146,26 +147,6 @@
    [letters]
    [word-editor]
    [words]])
-
-;; -- Dev Events --------------------------------------------------------------------
-(rf/reg-event-db
- :clear
- (fn [db _]
-   (assoc db :letters #{})))
-
-(rf/reg-event-db
- :clear-words
- (fn [db _]
-   (assoc db :words #{})))
-
-(rf/reg-event-db
- :clear-winners
- (fn [db _]
-   (assoc db :winners #{})))
-
-(comment (rf/dispatch [:clear])
-         (rf/dispatch [:clear-words])
-         (rf/dispatch [:clear-winners]))
 
 ;; -- After-Load --------------------------------------------------------------------
 ;; Do this after the page has loaded.
