@@ -76,3 +76,7 @@ ul.no-bullets {
 .delete {
     color: rgb(201, 8, 8);
 }
+
+.selected-count {
+    font-size: 0.7em;
+}
