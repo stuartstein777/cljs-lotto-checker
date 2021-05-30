@@ -1,5 +1,5 @@
 body{
-    background-color:lightsteelblue;
+    background-color: rgb(152, 193, 217);
 }
 
 .content {
@@ -16,6 +16,7 @@ body{
 }
 
 .letter {
+    color: rgb(37, 35, 35);
     font-size: 1.8em;
 }
 
@@ -70,4 +71,8 @@ ul.no-bullets {
 
 .letters {
     margin-bottom: 20px;
+}
+
+.delete {
+    color: rgb(201, 8, 8);
 }

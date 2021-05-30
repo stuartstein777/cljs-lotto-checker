@@ -87,7 +87,7 @@
   [:div.flex-container
    (for [[k letter] (keyed-collection letters)]
      [:div.letter-box.pointable {:key      k
-                                 :style    {:background-color (if (selected-letters letter) :orange "#f1f1f1")}
+                                 :style    {:background-color (if (selected-letters letter) "#EE6C4D" "#f1f1f1")}
                                  :on-click #(rf/dispatch [:toggle-letter letter])}
       [:label.pointable.letter letter]])])
 
@@ -103,7 +103,8 @@
 
 (defn word-editor []
   (let [winners @(rf/subscribe [:winners])
-        winner? (>= (count winners) 3)]
+        winner? (>= (count winners) 3)
+        current-word @(rf/subscribe [:current-word])]
     [:div
      [:h3 "Words"]
      [:div
@@ -112,7 +113,8 @@
                           :on-change #(rf/dispatch-sync [:word-change (-> % .-target .-value)])
                           :value @(rf/subscribe [:current-word])}]
       [:button.btn.btn-primary
-       {:on-click #(rf/dispatch [:add-word])}
+       {:on-click #(rf/dispatch [:add-word])
+        :disabled (= "" (str/trim current-word))}
        [:i.fas.fa-plus]]
       [:label.winners-count
        (str (count winners) " Winners!")]]
@@ -133,8 +135,7 @@
           [:li {:key k}
            [:div [:button.delete.btn
                   {:on-click #(rf/dispatch [:delete w])}
-                  [:i.fas.fa-trash-alt]]
-            [star winner?]
+                  [:i.fas.fa-times.delete]]
             w
             [star winner?]]]))]]))
 
