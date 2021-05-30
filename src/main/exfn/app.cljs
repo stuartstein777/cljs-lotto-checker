@@ -94,12 +94,7 @@
   (let [selected-letters @(rf/subscribe [:letters])]
     [:div.letters
      [:h3 "Select upto 18 letters"]
-     (let [letters "abcdefghijklmnopqrstuvwxyz"
-           a-to-m (->> letters
-                       (take 13))
-           n-to-z (->> letters
-                       (drop 13))
-       ]
+     (let [[a-to-m n-to-z] (partition 13 "abcdefghijklmnopqrstuvwxyz")]
        [:div
         [letters-row a-to-m selected-letters]
         [letters-row n-to-z selected-letters]
