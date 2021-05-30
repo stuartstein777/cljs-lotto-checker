@@ -8,10 +8,15 @@ body{
 }
 
 
-.letter {
+.letter-box {
     border-top: 1px solid white;
+    border-left: 1px solid rgb(150, 150, 150);
     border-bottom: 1px solid black;
     border-right: 1px solid black;
+}
+
+.letter {
+    font-size: 1.8em;
 }
 
 .flex-container {

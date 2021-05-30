@@ -1,7 +1,7 @@
 (ns exfn.app
   (:require [reagent.dom :as dom]
             [re-frame.core :as rf]
-            [goog.string.format]
+            [clojure.string :as str]
             [clojure.set :as set]))
 
 ;; -- Helpers ------------------------------------------------------------------------------------
@@ -18,7 +18,7 @@
 (rf/reg-event-db
  :initialize
  (fn [_ _]
-   {:words #{}
+   {:words []
     :current-word ""
     :winners []
     :letters #{}}))
@@ -28,7 +28,7 @@
  (fn [{:keys [letters words] :as db} [_ letter]]
    (let [new-letters (cond (letters letter)
                            (set/difference letters #{letter})
-                           
+
                            (= 18 (count letters))
                            letters
 
@@ -46,7 +46,8 @@
 (rf/reg-event-db
  :add-word
  (fn [{:keys [current-word letters words] :as db} _]
-   (let [new-words (conj words current-word)]
+   (let [current-word (str/lower-case current-word)
+         new-words (conj words current-word)]
      (-> db
          (update :words conj current-word)
          (assoc :current-word "")
@@ -61,7 +62,7 @@
          (assoc :winners (check (db :letters) new-words))))))
 
 ;; -- Subscriptions ------------------------------------------------------------------
-(rf/reg-sub 
+(rf/reg-sub
  :letters
  (fn [db _]
    (db :letters)))
@@ -85,10 +86,10 @@
 (defn letters-row [letters selected-letters]
   [:div.flex-container
    (for [[k letter] (keyed-collection letters)]
-     [:div.letter.pointable {:key      k
-                             :style    {:background-color (if (selected-letters letter) :yellow "#f1f1f1")}
-                             :on-click #(rf/dispatch [:toggle-letter letter])}
-      [:label.pointable letter]])])
+     [:div.letter-box.pointable {:key      k
+                                 :style    {:background-color (if (selected-letters letter) :orange "#f1f1f1")}
+                                 :on-click #(rf/dispatch [:toggle-letter letter])}
+      [:label.pointable.letter letter]])])
 
 (defn letters []
   (let [selected-letters @(rf/subscribe [:letters])]
@@ -101,22 +102,23 @@
         [:div (str "Selected " (count selected-letters) " letters")]])]))
 
 (defn word-editor []
-  (let [winners @(rf/subscribe [:winners])]
+  (let [winners @(rf/subscribe [:winners])
+        winner? (>= (count winners) 3)]
     [:div
      [:h3 "Words"]
-     [:div.winner {:style {:visibility (if (>= (count winners) 3) :visible :collapse)
-                           :height (if (>= (count winners) 3) 40 0)}}
-      [:h1.winner-indicator "You are a winner!"]]
      [:div
       [:label "Enter word: "]
       [:input.word-input {:type "text"
-               :on-change #(rf/dispatch-sync [:word-change (-> % .-target .-value)])
-               :value @(rf/subscribe [:current-word])}]
+                          :on-change #(rf/dispatch-sync [:word-change (-> % .-target .-value)])
+                          :value @(rf/subscribe [:current-word])}]
       [:button.btn.btn-primary
        {:on-click #(rf/dispatch [:add-word])}
        [:i.fas.fa-plus]]
-      [:label.winners-count 
-       (str (count winners) " Winners!")]]]))
+      [:label.winners-count
+       (str (count winners) " Winners!")]]
+     [:h1.winner-indicator.winner {:style {:visibility (if winner? :visible :collapse)
+                                           :height (if winner? 40 0)}}
+      "You are a winner!"]]))
 
 (defn star [hidden?]
   [:i.fas.fa-star.star.winner-indicator {:style {:visibility (if hidden? :visible :hidden)}}])
@@ -127,13 +129,14 @@
     [:div
      [:ul.no-bullets
       (for [[k w] (keyed-collection words)]
-        [:li {:key k}
-         [:div [:button.delete.btn
-                {:on-click #(rf/dispatch [:delete w])}
-                [:i.fas.fa-trash-alt]]
-          [star (winners w)]
-          w
-          [star (winners w)]]])]]))
+        (let [winner? (winners w)]
+          [:li {:key k}
+           [:div [:button.delete.btn
+                  {:on-click #(rf/dispatch [:delete w])}
+                  [:i.fas.fa-trash-alt]]
+            [star winner?]
+            w
+            [star winner?]]]))]]))
 
 ;; -- App -------------------------------------------------------------------------
 (defn app []
