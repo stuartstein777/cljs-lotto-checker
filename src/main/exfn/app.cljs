@@ -39,13 +39,13 @@
       [:div.col.col-lg-9]
       [:div.col.col-lg-3
        [:div.weight
-        [:div.row
+        [:div.row.weight-row
          [:div.col.col-md-9  "Current Weight"]
          [:div.col.col-md-3.weight-value current-weight " kg"]]
-        [:div.row
+        [:div.row.weight-row
          [:div.col.col-md-9 "Target Weight"]
          [:div.col.col-md-3.weight-value target-weight " kg"]]
-        [:div.row
+        [:div.row.weight-row
          [:div.col.col-md-9 "To Lose"]
          [:div.col.col-md-3.weight-value (- current-weight target-weight) " kg"]]
         [:div.row
