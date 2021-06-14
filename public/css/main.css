@@ -1,82 +1,85 @@
-body{
-    background-color: rgb(152, 193, 217);
+body {
+    background-color: #2e3440;
+    color: #d8dee9;
 }
 
+h1 {
+    color: #d8dee9;
+}
 .content {
     text-align: center;
     margin:10px;
 }
 
-
-.letter-box {
-    border-top: 1px solid white;
-    border-left: 1px solid rgb(150, 150, 150);
-    border-bottom: 1px solid black;
-    border-right: 1px solid black;
+.weight {
+    background-color: #434c5e;
+    border: 2px solid #eceff4;
+    border-radius: 15px;
+    padding: 10px;
 }
 
-.letter {
-    color: rgb(37, 35, 35);
-    font-size: 1.8em;
+.weight-value {
+    text-align: right;
 }
 
-.flex-container {
-    display: flex;
-    flex-wrap: wrap;
+.weight-row {
+    box-shadow: -2px 2px 1px -2px #d8dee9;
 }
 
-.flex-container > div {
-    width: 50px;
+.bmi {
+    font-size: 0.75em;
+    padding-top: 10px;
+}
+
+.bmi-container{
+    border: 1px solid #d8dee9;
+    height: 35px;
     margin: 5px;
-    text-align: center;
-    line-height: 50px;
-    font-size: 20px;
 }
 
-ul.no-bullets {
-    list-style: none;
-    padding: 0;
+.bmi-underweight {
+    background-color: pink;
+    color: #2e3440;
+    padding-left: 3px;
+    text-align: left;
+}
+
+.bmi-normal {
+    background-color: green;
+    padding-left: 3px;
+    text-align: left;
+}
+
+.bmi-overweight {
+    background-color: orange;
+    color: #2e3440;
     margin: 0;
-  }
-
-.winners-count {
-    margin-left: 15px;
+    padding-left: 3px;
+    text-align: left;
 }
 
-.winner-indicator {
-    color: orange;
-    text-shadow: -1px 0 red, 0 1px red, 1px 0 red, 0 -1px red;
+.bmi-obese {
+    background-color: red;
+    padding-left: 3px;
+    text-align: left;
 }
 
-.word-input {
-    margin: 10px;
+.bmi-indicator {
+    margin-bottom: 0px;
+    margin-top: -10px;
+    color: #d8dee9;
+    font-size: 2em;
+    padding: 0;
+    position: relative;
 }
 
-.winner:collapsed{
-    height: 0px;
-}
+/*
+#2e3440
+#3b4252
+#434c5e
+#4c566a
 
-.star {
-    margin-left: 5px;
-    margin-right: 5px;
-}
-
-.star.hidden {
-    visibility: hidden;
-}
-
-.pointable {
-    cursor: pointer;
-}
-
-.letters {
-    margin-bottom: 20px;
-}
-
-.delete {
-    color: rgb(201, 8, 8);
-}
-
-.selected-count {
-    font-size: 0.7em;
-}
+#d8dee9
+#e5e9f0
+#eceff4
+*/
