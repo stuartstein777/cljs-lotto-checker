@@ -4,7 +4,7 @@
             [clojure.string :as str]
             [clojure.set :as set]))
 
-;; -- Helpers ------------------------------------------------------------------------------------
+;; -- Helpers -------------------------------------------------------
 (defn check [letters words]
   (let [letters (set letters)]
     (->> words
@@ -14,7 +14,7 @@
 (defn keyed-collection [col]
   (map vector (iterate inc 0) col))
 
-;;-- Events and Effects --------------------------------------------------------------------------
+;;-- Events and Effects ---------------------------------------------
 (rf/reg-event-db
  :initialize
  (fn [_ _]
@@ -61,7 +61,7 @@
          (assoc :words new-words)
          (assoc :winners (check (db :letters) new-words))))))
 
-;; -- Subscriptions ------------------------------------------------------------------
+;; -- Subscriptions --------------------------------------------------
 (rf/reg-sub
  :letters
  (fn [db _]
@@ -82,24 +82,28 @@
  (fn [db _]
    (db :winners)))
 
-;; -- Reagent Forms ------------------------------------------------------------------
+;; -- Reagent Forms --------------------------------------------------
 (defn letters-row [letters selected-letters]
   [:div.flex-container
    (for [[k letter] (keyed-collection letters)]
-     [:div.letter-box.pointable {:key      k
-                                 :style    {:background-color (if (selected-letters letter) "#EE6C4D" "#f1f1f1")}
-                                 :on-click #(rf/dispatch [:toggle-letter letter])}
+     [:div.letter-box.pointable
+      {:key      k
+       :style    {:background-color (if (selected-letters letter)
+                                      "#EE6C4D"
+                                      "#f1f1f1")}
+       :on-click #(rf/dispatch [:toggle-letter letter])}
       [:label.pointable.letter letter]])])
 
 (defn letters []
   (let [selected-letters @(rf/subscribe [:letters])]
     [:div.letters
-     [:h3 "Select upto 18 letters" ]
+     [:h3 "Select upto 18 letters"]
      (let [[a-to-m n-to-z] (partition 13 "abcdefghijklmnopqrstuvwxyz")]
        [:div
         [letters-row a-to-m selected-letters]
         [letters-row n-to-z selected-letters]
-        [:div.selected-count (str "Selected " (count selected-letters) " letters")]])]))
+        [:div.selected-count
+         (str "Selected " (count selected-letters) " letters")]])]))
 
 (defn word-editor []
   (let [winners @(rf/subscribe [:winners])
@@ -109,21 +113,24 @@
      [:h3 "Words"]
      [:div
       [:label "Enter word: "]
-      [:input.word-input {:type "text"
-                          :on-change #(rf/dispatch-sync [:word-change (-> % .-target .-value)])
-                          :value @(rf/subscribe [:current-word])}]
+      [:input.word-input
+       {:type      "text"
+        :on-change #(rf/dispatch-sync [:word-change (-> % .-target .-value)])
+        :value     @(rf/subscribe [:current-word])}]
       [:button.btn.btn-primary
        {:on-click #(rf/dispatch [:add-word])
         :disabled (= "" (str/trim current-word))}
        [:i.fas.fa-plus]]
       [:label.winners-count
        (str (count winners) " Winners!")]]
-     [:h1.winner-indicator.winner {:style {:visibility (if winner? :visible :collapse)
-                                           :height (if winner? 40 0)}}
+     [:h1.winner-indicator.winner
+      {:style {:visibility (if winner? :visible :collapse)
+               :height     (if winner? 40 0)}}
       "You are a winner!"]]))
 
 (defn star [hidden?]
-  [:i.fas.fa-star.star.winner-indicator {:style {:visibility (if hidden? :visible :hidden)}}])
+  [:i.fas.fa-star.star.winner-indicator
+   {:style {:visibility (if hidden? :visible :hidden)}}])
 
 (defn words []
   (let [words @(rf/subscribe [:words])
@@ -139,7 +146,7 @@
             w
             [star winner?]]]))]]))
 
-;; -- App -------------------------------------------------------------------------
+;; -- App ------------------------------------------------------------
 (defn app []
   [:div.container
    [:h1 "Letters Lotto Checker"]
@@ -147,7 +154,7 @@
    [word-editor]
    [words]])
 
-;; -- After-Load --------------------------------------------------------------------
+;; -- After-Load -----------------------------------------------------
 ;; Do this after the page has loaded.
 ;; Initialize the initial db state.
 (defn ^:dev/after-load start
@@ -158,4 +165,4 @@
 (defn ^:export init []
   (start))
 
-(defonce initialize (rf/dispatch-sync [:initialize]))       ; dispatch the event which will create the initial state. 
+(defonce initialize (rf/dispatch-sync [:initialize]))
